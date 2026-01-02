@@ -1,0 +1,358 @@
+"""
+CLI for the todo application.
+
+This module contains the command-line interface for the todo application.
+"""
+import argparse
+import sys
+from typing import List
+from src.services.todo_service import TodoService
+
+
+class TodoCLI:
+    """
+    Command-line interface for the todo application.
+
+    This class handles user interaction through command-line interface.
+    """
+
+    def __init__(self):
+        """Initialize the CLI with a todo service."""
+        self.service = TodoService()
+
+    def add_task(self, title: str, description: str = "") -> None:
+        """
+        Add a new task to the system.
+
+        Args:
+            title: Title of the task
+            description: Description of the task
+        """
+        try:
+            task_id = self.service.add_task(title, description)
+            print(f"Task added successfully with ID: {task_id}")
+        except Exception as e:
+            print(f"Error adding task: {str(e)}")
+
+    def list_tasks(self) -> None:
+        """List all tasks in the system."""
+        try:
+            tasks = self.service.get_all_tasks()
+            if not tasks:
+                print("No tasks found.")
+                return
+
+            print("All Tasks:")
+            for task in tasks:
+                status = "✓" if task.completed else "○"
+                print(f"ID: {task.id} | {status} | {task.title}")
+                if task.description:
+                    print(f"  Description: {task.description}")
+                print()
+        except Exception as e:
+            print(f"Error listing tasks: {str(e)}")
+
+    def get_task(self, task_id: int) -> None:
+        """
+        Get a specific task by ID.
+
+        Args:
+            task_id: ID of the task to retrieve
+        """
+        try:
+            task = self.service.get_task(task_id)
+            status = "Completed" if task.completed else "Pending"
+            print(f"ID: {task.id}")
+            print(f"Title: {task.title}")
+            print(f"Description: {task.description}")
+            print(f"Status: {status}")
+            print(f"Created: {task.created_at}")
+        except Exception as e:
+            print(f"Error getting task: {str(e)}")
+
+    def update_task(self, task_id: int, title: str = None, description: str = None) -> None:
+        """
+        Update an existing task.
+
+        Args:
+            task_id: ID of the task to update
+            title: New title for the task (optional)
+            description: New description for the task (optional)
+        """
+        try:
+            success = self.service.update_task(task_id, title, description)
+            if success:
+                print(f"Task {task_id} updated successfully")
+            else:
+                print(f"Failed to update task {task_id}")
+        except Exception as e:
+            print(f"Error updating task: {str(e)}")
+
+    def delete_task(self, task_id: int) -> None:
+        """
+        Delete a task by ID.
+
+        Args:
+            task_id: ID of the task to delete
+        """
+        try:
+            success = self.service.delete_task(task_id)
+            if success:
+                print(f"Task {task_id} deleted successfully")
+            else:
+                print(f"Failed to delete task {task_id}")
+        except Exception as e:
+            print(f"Error deleting task: {str(e)}")
+
+    def mark_complete(self, task_id: int) -> None:
+        """
+        Mark a task as complete.
+
+        Args:
+            task_id: ID of the task to mark complete
+        """
+        try:
+            success = self.service.mark_task_complete(task_id)
+            if success:
+                print(f"Task {task_id} marked as complete")
+            else:
+                print(f"Failed to mark task {task_id} as complete")
+        except Exception as e:
+            print(f"Error marking task as complete: {str(e)}")
+
+    def mark_incomplete(self, task_id: int) -> None:
+        """
+        Mark a task as incomplete.
+
+        Args:
+            task_id: ID of the task to mark incomplete
+        """
+        try:
+            success = self.service.mark_task_incomplete(task_id)
+            if success:
+                print(f"Task {task_id} marked as incomplete")
+            else:
+                print(f"Failed to mark task {task_id} as incomplete")
+        except Exception as e:
+            print(f"Error marking task as incomplete: {str(e)}")
+
+    def run_interactive(self) -> None:
+        """Run the interactive CLI loop."""
+        print("Welcome to the Todo Application!")
+        print("Available commands: add, list, get, update, delete, complete, incomplete, help, exit")
+        print("Type 'help' for more information on commands.")
+
+        while True:
+            try:
+                command = input("\ntodo> ").strip().split()
+
+                if not command:
+                    continue
+
+                cmd = command[0].lower()
+
+                if cmd == "exit" or cmd == "quit":
+                    print("Goodbye!")
+                    break
+                elif cmd == "help":
+                    self.show_help()
+                elif cmd == "add":
+                    self.handle_add_command(command[1:])
+                elif cmd == "list":
+                    self.list_tasks()
+                elif cmd == "get":
+                    self.handle_get_command(command[1:])
+                elif cmd == "update":
+                    self.handle_update_command(command[1:])
+                elif cmd == "delete":
+                    self.handle_delete_command(command[1:])
+                elif cmd == "complete":
+                    self.handle_complete_command(command[1:])
+                elif cmd == "incomplete":
+                    self.handle_incomplete_command(command[1:])
+                else:
+                    print(f"Unknown command: {cmd}. Type 'help' for available commands.")
+
+            except KeyboardInterrupt:
+                print("\nGoodbye!")
+                break
+            except EOFError:
+                print("\nGoodbye!")
+                break
+
+    def handle_add_command(self, args: List[str]) -> None:
+        """Handle the add command with arguments."""
+        if len(args) < 1:
+            print("Usage: add <title> [description]")
+            return
+
+        title = args[0]
+        description = " ".join(args[1:]) if len(args) > 1 else ""
+        self.add_task(title, description)
+
+    def handle_get_command(self, args: List[str]) -> None:
+        """Handle the get command with arguments."""
+        if len(args) != 1:
+            print("Usage: get <task_id>")
+            return
+
+        try:
+            task_id = int(args[0])
+            self.get_task(task_id)
+        except ValueError:
+            print("Task ID must be a number")
+
+    def handle_update_command(self, args: List[str]) -> None:
+        """Handle the update command with arguments."""
+        if len(args) < 2:
+            print("Usage: update <task_id> <title> [description]")
+            return
+
+        try:
+            task_id = int(args[0])
+            title = args[1]
+            description = " ".join(args[2:]) if len(args) > 2 else None
+            self.update_task(task_id, title, description)
+        except ValueError:
+            print("Task ID must be a number")
+
+    def handle_delete_command(self, args: List[str]) -> None:
+        """Handle the delete command with arguments."""
+        if len(args) != 1:
+            print("Usage: delete <task_id>")
+            return
+
+        try:
+            task_id = int(args[0])
+            self.delete_task(task_id)
+        except ValueError:
+            print("Task ID must be a number")
+
+    def handle_complete_command(self, args: List[str]) -> None:
+        """Handle the complete command with arguments."""
+        if len(args) != 1:
+            print("Usage: complete <task_id>")
+            return
+
+        try:
+            task_id = int(args[0])
+            self.mark_complete(task_id)
+        except ValueError:
+            print("Task ID must be a number")
+
+    def handle_incomplete_command(self, args: List[str]) -> None:
+        """Handle the incomplete command with arguments."""
+        if len(args) != 1:
+            print("Usage: incomplete <task_id>")
+            return
+
+        try:
+            task_id = int(args[0])
+            self.mark_incomplete(task_id)
+        except ValueError:
+            print("Task ID must be a number")
+
+    def show_help(self) -> None:
+        """Show help information."""
+        help_text = """
+Available commands:
+  add <title> [description]    - Add a new task
+  list                         - List all tasks
+  get <task_id>                - Get a specific task
+  update <task_id> <title> [description] - Update a task
+  delete <task_id>             - Delete a task
+  complete <task_id>           - Mark task as complete
+  incomplete <task_id>         - Mark task as incomplete
+  help                         - Show this help message
+  exit/quit                    - Exit the application
+        """
+        print(help_text)
+
+
+def main():
+    """Main entry point for the todo CLI application."""
+    parser = argparse.ArgumentParser(description="Todo Application CLI")
+    parser.add_argument("command", nargs="?", help="Command to execute")
+    parser.add_argument("args", nargs="*", help="Arguments for the command")
+
+    args = parser.parse_args()
+
+    cli = TodoCLI()
+
+    if args.command:
+        # Execute a single command and exit
+        cmd = args.command.lower()
+
+        if cmd == "add":
+            if len(args.args) < 1:
+                print("Usage: python -m src.cli.todo_cli add <title> [description]")
+                sys.exit(1)
+            title = args.args[0]
+            description = " ".join(args.args[1:]) if len(args.args) > 1 else ""
+            cli.add_task(title, description)
+        elif cmd == "list":
+            cli.list_tasks()
+        elif cmd == "get":
+            if len(args.args) != 1:
+                print("Usage: python -m src.cli.todo_cli get <task_id>")
+                sys.exit(1)
+            try:
+                task_id = int(args.args[0])
+                cli.get_task(task_id)
+            except ValueError:
+                print("Task ID must be a number")
+                sys.exit(1)
+        elif cmd == "update":
+            if len(args.args) < 2:
+                print("Usage: python -m src.cli.todo_cli update <task_id> <title> [description]")
+                sys.exit(1)
+            try:
+                task_id = int(args.args[0])
+                title = args.args[1]
+                description = " ".join(args.args[2:]) if len(args.args) > 2 else None
+                cli.update_task(task_id, title, description)
+            except ValueError:
+                print("Task ID must be a number")
+                sys.exit(1)
+        elif cmd == "delete":
+            if len(args.args) != 1:
+                print("Usage: python -m src.cli.todo_cli delete <task_id>")
+                sys.exit(1)
+            try:
+                task_id = int(args.args[0])
+                cli.delete_task(task_id)
+            except ValueError:
+                print("Task ID must be a number")
+                sys.exit(1)
+        elif cmd == "complete":
+            if len(args.args) != 1:
+                print("Usage: python -m src.cli.todo_cli complete <task_id>")
+                sys.exit(1)
+            try:
+                task_id = int(args.args[0])
+                cli.mark_complete(task_id)
+            except ValueError:
+                print("Task ID must be a number")
+                sys.exit(1)
+        elif cmd == "incomplete":
+            if len(args.args) != 1:
+                print("Usage: python -m src.cli.todo_cli incomplete <task_id>")
+                sys.exit(1)
+            try:
+                task_id = int(args.args[0])
+                cli.mark_incomplete(task_id)
+            except ValueError:
+                print("Task ID must be a number")
+                sys.exit(1)
+        elif cmd == "help":
+            cli.show_help()
+        else:
+            print(f"Unknown command: {cmd}")
+            sys.exit(1)
+    else:
+        # Run interactive mode
+        cli.run_interactive()
+
+
+if __name__ == "__main__":
+    main()

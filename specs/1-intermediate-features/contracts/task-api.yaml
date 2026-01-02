@@ -1,0 +1,99 @@
+# API Contract for Task Management with Organizational Features
+
+# This represents the conceptual API contracts for the service layer
+# In a console application, these would be method signatures rather than HTTP APIs
+
+## Task Model Extensions
+
+Task:
+  type: object
+  properties:
+    id:
+      type: integer
+      description: Unique identifier for the task
+    title:
+      type: string
+      description: Title of the task
+    description:
+      type: string
+      description: Detailed description of the task
+    completed:
+      type: boolean
+      description: Whether the task is completed
+    priority:
+      type: string
+      enum: [high, medium, low]
+      description: Priority level of the task
+    tags:
+      type: array
+      items:
+        type: string
+      description: List of tags associated with the task
+    created_at:
+      type: string
+      format: date-time
+      description: When the task was created
+    updated_at:
+      type: string
+      format: date-time
+      description: When the task was last updated
+
+## Service Methods
+
+TodoService:
+  set_priority:
+    description: Set the priority level for a task
+    parameters:
+      - name: task_id
+        type: integer
+        required: true
+      - name: priority
+        type: string
+        enum: [high, medium, low]
+        required: true
+    returns: Task
+
+  add_tag:
+    description: Add a tag to a task
+    parameters:
+      - name: task_id
+        type: integer
+        required: true
+      - name: tag
+        type: string
+        required: true
+    returns: Task
+
+  remove_tag:
+    description: Remove a tag from a task
+    parameters:
+      - name: task_id
+        type: integer
+        required: true
+      - name: tag
+        type: string
+        required: true
+    returns: Task
+
+  search_tasks:
+    description: Search tasks by keyword in title or description
+    parameters:
+      - name: query
+        type: string
+        required: true
+    returns: array of Task
+
+  filter_tasks:
+    description: Filter tasks by various criteria
+    parameters:
+      - name: status
+        type: boolean
+        required: false
+      - name: priority
+        type: string
+        enum: [high, medium, low]
+        required: false
+      - name: tag
+        type: string
+        required: false
+    returns: array of Task
